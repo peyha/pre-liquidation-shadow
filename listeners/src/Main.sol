@@ -37,17 +37,33 @@ interface IMorpho {
     function idToMarketParams(bytes32 id) external view returns (MarketParams memory);
 }
 
+struct PreLiquidationParams {
+    uint256 preLltv;
+    uint256 preLCF1;
+    uint256 preLCF2;
+    uint256 preLIF1;
+    uint256 preLIF2;
+    address preLiquidationOracle;
+}
+
+interface IPreLiquidation {
+    function MORPHO() external view returns (IMorpho);
+
+    function ID() external view returns (bytes32);
+
+    function marketParams() external returns (MarketParams memory);
+
+    function preLiquidationParams() external view returns (PreLiquidationParams memory);
+
+    function preLiquidate(address borrower, uint256 seizedAssets, uint256 repaidShares, bytes calldata data)
+        external
+        returns (uint256, uint256);
+}
+
 contract Triggers is BaseTriggers {
     function triggers() external virtual override {
         Listener listener = new Listener();
-        addTrigger(
-            chainContract(Chains.Base, 0xa517FE2CF559e1c37D4BB844770B089ab9227Ae7), // AERO/USDC
-            listener.triggerOnPreLiquidateFunction()
-        );
-        addTrigger(
-            chainContract(Chains.Base, 0x28AA3e00a464E7392BFB90762417EA62e3579348), // cbBTC/sUSDS
-            listener.triggerOnPreLiquidateFunction()
-        );
+        addTrigger(chainAbi(Chains.Base, PreLiquidation$Abi()), listener.triggerOnPreLiquidateFunction());
     }
 }
 
@@ -60,9 +76,8 @@ contract Listener is PreLiquidation$OnPreLiquidateFunction {
         PreLiquidation$preLiquidateFunctionOutputs memory outputs
     ) external override {
         IMorpho morpho = IMorpho(0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb);
-        //IPreLiquidation preliq = IPreLiquidation(ctx.txn.call.callee);
-        //bytes32 id = preliq.ID();
-        bytes32 id = 0xdaa04f6819210b11fe4e3b65300c725c32e55755e3598671559b9ae3bac453d7;
+        IPreLiquidation preliq = IPreLiquidation(ctx.txn.call.callee);
+        bytes32 id = preliq.ID();
         MarketParams memory marketParams = morpho.idToMarketParams(id);
         Position memory position = morpho.position(id, inputs.borrower);
         Market memory market = morpho.market(id);
