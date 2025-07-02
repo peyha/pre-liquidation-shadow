@@ -60,6 +60,17 @@ interface IPreLiquidation {
         returns (uint256, uint256);
 }
 
+interface IIrm {
+    /// @notice Returns the borrow rate per second (scaled by WAD) of the market `marketParams`.
+    /// @dev Assumes that `market` corresponds to `marketParams`.
+    function borrowRate(MarketParams memory marketParams, Market memory market) external returns (uint256);
+
+    /// @notice Returns the borrow rate per second (scaled by WAD) of the market `marketParams` without modifying any
+    /// storage.
+    /// @dev Assumes that `market` corresponds to `marketParams`.
+    function borrowRateView(MarketParams memory marketParams, Market memory market) external view returns (uint256);
+}
+
 contract Triggers is BaseTriggers {
     function triggers() external virtual override {
         Listener listener = new Listener();
@@ -69,6 +80,15 @@ contract Triggers is BaseTriggers {
 
 contract Listener is PreLiquidation$OnPreLiquidateFunction {
     event PreLiquidationHealth(uint64 chainbytes32, bytes32 txHash, uint256 ltv);
+
+    function wTaylorCompounded(uint256 x, uint256 n) internal pure returns (uint256) {
+        uint256 WAD = 1e18;
+        uint256 firstTerm = x * n;
+        uint256 secondTerm = firstTerm * firstTerm / (2 * WAD);
+        uint256 thirdTerm = secondTerm * firstTerm / (3 * WAD);
+
+        return firstTerm + secondTerm + thirdTerm;
+    }
 
     function onPreLiquidateFunction(
         FunctionContext memory ctx,
@@ -81,11 +101,19 @@ contract Listener is PreLiquidation$OnPreLiquidateFunction {
         MarketParams memory marketParams = morpho.idToMarketParams(id);
         Position memory position = morpho.position(id, inputs.borrower);
         Market memory market = morpho.market(id);
+        uint256 interest;
+        {
+            uint256 elapsed = block.timestamp - market.lastUpdate;
+            uint256 borrowRate = IIrm(marketParams.irm).borrowRateView(marketParams, market);
+            uint256 compoundedRate = wTaylorCompounded(borrowRate, elapsed);
+            interest = market.totalBorrowAssets * compoundedRate / (1e18);
+        }
 
         uint256 collateralPrice = IOracle(marketParams.oracle).price();
         uint256 collateralQuoted = uint256(position.collateral) * collateralPrice / (1e36);
         uint256 borrowed = (
-            uint256(position.borrowShares) * (market.totalBorrowAssets + 1) + market.totalBorrowShares + 1e6 - 1
+            uint256(position.borrowShares) * (market.totalBorrowAssets + interest + 1) + market.totalBorrowShares + 1e6
+                - 1
         ) / (market.totalBorrowShares + 1e6);
 
         uint256 ltv = (borrowed * 1e18 + collateralQuoted - 1) / collateralQuoted;
