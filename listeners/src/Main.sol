@@ -110,11 +110,11 @@ contract Listener is PreLiquidation$OnPreLiquidateFunction {
         }
 
         uint256 collateralPrice = IOracle(marketParams.oracle).price();
-        uint256 collateralQuoted = uint256(position.collateral) * collateralPrice / (1e36);
+        uint256 collateralQuoted = uint256(position.collateral + outputs.outArg0) * collateralPrice / (1e36);
         uint256 borrowed = (
             uint256(position.borrowShares) * (market.totalBorrowAssets + interest + 1) + market.totalBorrowShares + 1e6
                 - 1
-        ) / (market.totalBorrowShares + 1e6);
+        ) / (market.totalBorrowShares + 1e6) + outputs.outArg1;
 
         uint256 ltv = (borrowed * 1e18 + collateralQuoted - 1) / collateralQuoted;
 
