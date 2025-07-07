@@ -79,7 +79,7 @@ contract Triggers is BaseTriggers {
 }
 
 contract Listener is PreLiquidation$OnPreLiquidateFunction {
-    event PreLiquidationHealth(uint64 chainbytes32, bytes32 txHash, uint256 ltv);
+    event PreLiquidationHealth(uint64 chainid, bytes32 txHash, uint256 ltv);
 
     function wTaylorCompounded(uint256 x, uint256 n) internal pure returns (uint256) {
         uint256 WAD = 1e18;
@@ -92,8 +92,8 @@ contract Listener is PreLiquidation$OnPreLiquidateFunction {
 
     function onPreLiquidateFunction(
         FunctionContext memory ctx,
-        PreLiquidation$preLiquidateFunctionInputs memory inputs,
-        PreLiquidation$preLiquidateFunctionOutputs memory outputs
+        PreLiquidation$PreLiquidateFunctionInputs memory inputs,
+        PreLiquidation$PreLiquidateFunctionOutputs memory outputs
     ) external override {
         IMorpho morpho = IMorpho(0xBBBBBbbBBb9cC5e90e3b3Af64bdAF62C37EEFFCb);
         IPreLiquidation preliq = IPreLiquidation(ctx.txn.call.callee);

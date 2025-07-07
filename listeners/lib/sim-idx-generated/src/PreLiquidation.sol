@@ -7,11 +7,12 @@ import "lib/sim-idx-sol/src/Context.sol";
 function PreLiquidation$Abi() pure returns (Abi memory) {
     return Abi("PreLiquidation");
 }
-struct PreLiquidation$idFunctionOutputs {
+
+struct PreLiquidation$IdFunctionOutputs {
     bytes32 outArg0;
 }
 
-struct PreLiquidation$morphoFunctionOutputs {
+struct PreLiquidation$MorphoFunctionOutputs {
     address outArg0;
 }
 
@@ -23,23 +24,23 @@ struct PreLiquidation$MarketParams {
     uint256 lltv;
 }
 
-struct PreLiquidation$marketParamsFunctionOutputs {
+struct PreLiquidation$MarketParamsFunctionOutputs {
     PreLiquidation$MarketParams outArg0;
 }
 
-struct PreLiquidation$onMorphoRepayFunctionInputs {
+struct PreLiquidation$OnMorphoRepayFunctionInputs {
     uint256 repaidAssets;
     bytes callbackData;
 }
 
-struct PreLiquidation$preLiquidateFunctionInputs {
+struct PreLiquidation$PreLiquidateFunctionInputs {
     address borrower;
     uint256 seizedAssets;
     uint256 repaidShares;
     bytes data;
 }
 
-struct PreLiquidation$preLiquidateFunctionOutputs {
+struct PreLiquidation$PreLiquidateFunctionOutputs {
     uint256 outArg0;
     uint256 outArg1;
 }
@@ -53,7 +54,7 @@ struct PreLiquidation$PreLiquidationParams {
     address preLiquidationOracle;
 }
 
-struct PreLiquidation$preLiquidationParamsFunctionOutputs {
+struct PreLiquidation$PreLiquidationParamsFunctionOutputs {
     PreLiquidation$PreLiquidationParams outArg0;
 }
 
@@ -67,9 +68,11 @@ struct PreLiquidation$PreLiquidateEventParams {
 }
 
 abstract contract PreLiquidation$OnPreLiquidateEvent {
-    function onPreLiquidateEvent(EventContext memory ctx, PreLiquidation$PreLiquidateEventParams memory inputs) virtual external;
+    function onPreLiquidateEvent(EventContext memory ctx, PreLiquidation$PreLiquidateEventParams memory inputs)
+        external
+        virtual;
 
-    function triggerOnPreLiquidateEvent() view external returns (Trigger memory) {
+    function triggerOnPreLiquidateEvent() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes32(0xd5b01f148b35d6069b626af105bf8881bc2e30ee1ce3de4630903abab0ba8580),
@@ -81,9 +84,11 @@ abstract contract PreLiquidation$OnPreLiquidateEvent {
 }
 
 abstract contract PreLiquidation$OnIdFunction {
-    function onIdFunction(FunctionContext memory ctx, PreLiquidation$idFunctionOutputs memory outputs) virtual external;
+    function onIdFunction(FunctionContext memory ctx, PreLiquidation$IdFunctionOutputs memory outputs)
+        external
+        virtual;
 
-    function triggerOnIdFunction() view external returns (Trigger memory) {
+    function triggerOnIdFunction() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes4(0xb3cea217),
@@ -94,10 +99,26 @@ abstract contract PreLiquidation$OnIdFunction {
     }
 }
 
-abstract contract PreLiquidation$OnMorphoFunction {
-    function onMorphoFunction(FunctionContext memory ctx, PreLiquidation$morphoFunctionOutputs memory outputs) virtual external;
+abstract contract PreLiquidation$PreIdFunction {
+    function preIdFunction(FunctionContext memory ctx) external virtual;
 
-    function triggerOnMorphoFunction() view external returns (Trigger memory) {
+    function triggerPreIdFunction() external view returns (Trigger memory) {
+        return Trigger({
+            abiName: "PreLiquidation",
+            selector: bytes4(0xb3cea217),
+            triggerType: TriggerType.FUNCTION,
+            listenerCodehash: address(this).codehash,
+            handlerSelector: this.preIdFunction.selector
+        });
+    }
+}
+
+abstract contract PreLiquidation$OnMorphoFunction {
+    function onMorphoFunction(FunctionContext memory ctx, PreLiquidation$MorphoFunctionOutputs memory outputs)
+        external
+        virtual;
+
+    function triggerOnMorphoFunction() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes4(0x3acb5624),
@@ -108,10 +129,27 @@ abstract contract PreLiquidation$OnMorphoFunction {
     }
 }
 
-abstract contract PreLiquidation$OnMarketParamsFunction {
-    function onMarketParamsFunction(FunctionContext memory ctx, PreLiquidation$marketParamsFunctionOutputs memory outputs) virtual external;
+abstract contract PreLiquidation$PreMorphoFunction {
+    function preMorphoFunction(FunctionContext memory ctx) external virtual;
 
-    function triggerOnMarketParamsFunction() view external returns (Trigger memory) {
+    function triggerPreMorphoFunction() external view returns (Trigger memory) {
+        return Trigger({
+            abiName: "PreLiquidation",
+            selector: bytes4(0x3acb5624),
+            triggerType: TriggerType.FUNCTION,
+            listenerCodehash: address(this).codehash,
+            handlerSelector: this.preMorphoFunction.selector
+        });
+    }
+}
+
+abstract contract PreLiquidation$OnMarketParamsFunction {
+    function onMarketParamsFunction(
+        FunctionContext memory ctx,
+        PreLiquidation$MarketParamsFunctionOutputs memory outputs
+    ) external virtual;
+
+    function triggerOnMarketParamsFunction() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes4(0x7b9e68f2),
@@ -122,10 +160,27 @@ abstract contract PreLiquidation$OnMarketParamsFunction {
     }
 }
 
-abstract contract PreLiquidation$OnOnMorphoRepayFunction {
-    function onOnMorphoRepayFunction(FunctionContext memory ctx, PreLiquidation$onMorphoRepayFunctionInputs memory inputs) virtual external;
+abstract contract PreLiquidation$PreMarketParamsFunction {
+    function preMarketParamsFunction(FunctionContext memory ctx) external virtual;
 
-    function triggerOnOnMorphoRepayFunction() view external returns (Trigger memory) {
+    function triggerPreMarketParamsFunction() external view returns (Trigger memory) {
+        return Trigger({
+            abiName: "PreLiquidation",
+            selector: bytes4(0x7b9e68f2),
+            triggerType: TriggerType.FUNCTION,
+            listenerCodehash: address(this).codehash,
+            handlerSelector: this.preMarketParamsFunction.selector
+        });
+    }
+}
+
+abstract contract PreLiquidation$OnOnMorphoRepayFunction {
+    function onOnMorphoRepayFunction(
+        FunctionContext memory ctx,
+        PreLiquidation$OnMorphoRepayFunctionInputs memory inputs
+    ) external virtual;
+
+    function triggerOnOnMorphoRepayFunction() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes4(0x05b4591c),
@@ -136,10 +191,31 @@ abstract contract PreLiquidation$OnOnMorphoRepayFunction {
     }
 }
 
-abstract contract PreLiquidation$OnPreLiquidateFunction {
-    function onPreLiquidateFunction(FunctionContext memory ctx, PreLiquidation$preLiquidateFunctionInputs memory inputs, PreLiquidation$preLiquidateFunctionOutputs memory outputs) virtual external;
+abstract contract PreLiquidation$PreOnMorphoRepayFunction {
+    function preOnMorphoRepayFunction(
+        FunctionContext memory ctx,
+        PreLiquidation$OnMorphoRepayFunctionInputs memory inputs
+    ) external virtual;
 
-    function triggerOnPreLiquidateFunction() view external returns (Trigger memory) {
+    function triggerPreOnMorphoRepayFunction() external view returns (Trigger memory) {
+        return Trigger({
+            abiName: "PreLiquidation",
+            selector: bytes4(0x05b4591c),
+            triggerType: TriggerType.FUNCTION,
+            listenerCodehash: address(this).codehash,
+            handlerSelector: this.preOnMorphoRepayFunction.selector
+        });
+    }
+}
+
+abstract contract PreLiquidation$OnPreLiquidateFunction {
+    function onPreLiquidateFunction(
+        FunctionContext memory ctx,
+        PreLiquidation$PreLiquidateFunctionInputs memory inputs,
+        PreLiquidation$PreLiquidateFunctionOutputs memory outputs
+    ) external virtual;
+
+    function triggerOnPreLiquidateFunction() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes4(0x3078f50a),
@@ -150,10 +226,30 @@ abstract contract PreLiquidation$OnPreLiquidateFunction {
     }
 }
 
-abstract contract PreLiquidation$OnPreLiquidationParamsFunction {
-    function onPreLiquidationParamsFunction(FunctionContext memory ctx, PreLiquidation$preLiquidationParamsFunctionOutputs memory outputs) virtual external;
+abstract contract PreLiquidation$PrePreLiquidateFunction {
+    function prePreLiquidateFunction(
+        FunctionContext memory ctx,
+        PreLiquidation$PreLiquidateFunctionInputs memory inputs
+    ) external virtual;
 
-    function triggerOnPreLiquidationParamsFunction() view external returns (Trigger memory) {
+    function triggerPrePreLiquidateFunction() external view returns (Trigger memory) {
+        return Trigger({
+            abiName: "PreLiquidation",
+            selector: bytes4(0x3078f50a),
+            triggerType: TriggerType.FUNCTION,
+            listenerCodehash: address(this).codehash,
+            handlerSelector: this.prePreLiquidateFunction.selector
+        });
+    }
+}
+
+abstract contract PreLiquidation$OnPreLiquidationParamsFunction {
+    function onPreLiquidationParamsFunction(
+        FunctionContext memory ctx,
+        PreLiquidation$PreLiquidationParamsFunctionOutputs memory outputs
+    ) external virtual;
+
+    function triggerOnPreLiquidationParamsFunction() external view returns (Trigger memory) {
         return Trigger({
             abiName: "PreLiquidation",
             selector: bytes4(0x1d553cee),
@@ -164,18 +260,43 @@ abstract contract PreLiquidation$OnPreLiquidationParamsFunction {
     }
 }
 
-contract PreLiquidation$EmitAllEvents is
-  PreLiquidation$OnPreLiquidateEvent
-{
-  event PreLiquidate(bytes32 id, address liquidator, address borrower, uint256 repaidAssets, uint256 repaidShares, uint256 seizedAssets);
+abstract contract PreLiquidation$PrePreLiquidationParamsFunction {
+    function prePreLiquidationParamsFunction(FunctionContext memory ctx) external virtual;
 
-  function onPreLiquidateEvent(EventContext memory ctx, PreLiquidation$PreLiquidateEventParams memory inputs) virtual external override {
-    emit PreLiquidate(inputs.id, inputs.liquidator, inputs.borrower, inputs.repaidAssets, inputs.repaidShares, inputs.seizedAssets);
-  }
+    function triggerPrePreLiquidationParamsFunction() external view returns (Trigger memory) {
+        return Trigger({
+            abiName: "PreLiquidation",
+            selector: bytes4(0x1d553cee),
+            triggerType: TriggerType.FUNCTION,
+            listenerCodehash: address(this).codehash,
+            handlerSelector: this.prePreLiquidationParamsFunction.selector
+        });
+    }
+}
 
-  function allTriggers() view external returns (Trigger[] memory) {
-    Trigger[] memory triggers = new Trigger[](1);
-    triggers[0] = this.triggerOnPreLiquidateEvent();
-    return triggers;
-  }
+contract PreLiquidation$EmitAllEvents is PreLiquidation$OnPreLiquidateEvent {
+    event PreLiquidate(
+        bytes32 id,
+        address liquidator,
+        address borrower,
+        uint256 repaidAssets,
+        uint256 repaidShares,
+        uint256 seizedAssets
+    );
+
+    function onPreLiquidateEvent(EventContext memory ctx, PreLiquidation$PreLiquidateEventParams memory inputs)
+        external
+        virtual
+        override
+    {
+        emit PreLiquidate(
+            inputs.id, inputs.liquidator, inputs.borrower, inputs.repaidAssets, inputs.repaidShares, inputs.seizedAssets
+        );
+    }
+
+    function allTriggers() external view returns (Trigger[] memory) {
+        Trigger[] memory triggers = new Trigger[](1);
+        triggers[0] = this.triggerOnPreLiquidateEvent();
+        return triggers;
+    }
 }
